@@ -1,5 +1,7 @@
 """
 Most of the code in this file was taken from the annotated implementation of GATv2 by Shaked Brody on https://nn.labml.ai/graphs/gatv2/
+
+This file contains the implementations for both a one-layer and a two-layer variant of GATv2, subclasses of torch.nn.Module
 """
 
 import torch
@@ -41,6 +43,7 @@ class GraphAttentionV2Layer(Module):
         * `dropout` is the dropout probability
         * `leaky_relu_negative_slope` is the negative slope for leaky relu activation
         * `share_weights` if set to `True`, the same matrix will be applied to the source and the target node of every edge
+        * `architecture` determines whether architecture A or B is used
         """
         super().__init__()
 
@@ -134,3 +137,95 @@ class GraphAttentionV2Layer(Module):
         else:
             # $$\overrightarrow{h'_i} = \frac{1}{K} \sum_{k=1}^{K} \overrightarrow{h'^k_i}$$
             return attn_res.mean(dim=1)
+        
+
+class GATv2_1L(nn.Module):
+    """
+    ## Graph Attention Network v2 (GATv2)
+
+    This graph attention network has one Graph Attention Layer
+    """
+
+    def __init__(self, in_features: int, n_classes: int, n_heads: int, dropout: float,
+                 share_weights: bool = True, architecture: Architecture = Architecture.A):
+        """
+        * `in_features` is the dimension of the initial feature vectors
+        * `n_hidden` is the dimension of each intermediate node representation
+        * `n_classes` is the number of classes
+        * `n_heads` is the number of heads in the graph attention layers
+        * `dropout` is the dropout probability
+        * `share_weights` if set to True, the same matrix will be applied to the source and the target node of every edge
+        * `architecture` determines whether architecture A or B is used
+        """
+        super().__init__()
+
+        # First graph attention layer where we average the heads
+        self.layer1 = GraphAttentionV2Layer(in_features, n_classes, n_heads,
+                                            is_concat=False, dropout=dropout,
+                                            share_weights=share_weights, architecture=architecture)
+        # Dropout
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, x: torch.Tensor, adj_mat: torch.Tensor):
+        """
+        * `x` is the features vectors of shape `[n_nodes, in_features]`
+        * `adj_mat` is the adjacency matrix of the form
+         `[n_nodes, n_nodes, n_heads]` or `[n_nodes, n_nodes, 1]`
+        """
+        # Apply dropout to the input
+        x = self.dropout(x)
+        # First graph attention layer
+        x = self.layer1(x, adj_mat)
+        return x
+
+
+class GATv2_2L(nn.Module):
+    """
+    ## Graph Attention Network v2 (GATv2)
+
+    This graph attention network has two Graph Attention Layers and an activation in between
+    """
+
+    def __init__(self, in_features: int, n_hidden: int, n_classes: int, n_heads: int, dropout: float,
+                 share_weights: bool = True, architecture: Architecture = Architecture.A, activation = nn.Tanh()):
+        """
+        * `in_features` is the dimension of the initial feature vectors
+        * `n_hidden` is the dimension of each intermediate node representation
+        * `n_classes` is the number of classes
+        * `n_heads` is the number of heads in the graph attention layers
+        * `dropout` is the dropout probability
+        * `share_weights` if set to True, the same matrix will be applied to the source and the target node of every edge
+        * `architecture` determines whether architecture A or B is used
+        * `activation` is the activation function used in between the two layers
+        """
+        super().__init__()
+
+        # First graph attention layer where we concatenate the heads
+        self.layer1 = GraphAttentionV2Layer(in_features, n_hidden, n_heads,
+                                            is_concat=True, dropout=dropout,
+                                            share_weights=share_weights, architecture=architecture)
+        # Activation function after first graph attention layer
+        self.activation = activation
+        # Final graph attention layer where we average the heads
+        self.layer2 = GraphAttentionV2Layer(n_hidden, n_classes, 1,
+                                            is_concat=False, dropout=dropout,
+                                            share_weights=share_weights, architecture=architecture)
+        # Dropout
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, x: torch.Tensor, adj_mat: torch.Tensor):
+        """
+        * `x` is the features vectors of shape `[n_nodes, in_features]`
+        * `adj_mat` is the adjacency matrix of the form
+         `[n_nodes, n_nodes, n_heads]` or `[n_nodes, n_nodes, 1]`
+        """
+        # Apply dropout to the input
+        x = self.dropout(x)
+        # First graph attention layer
+        x = self.layer1(x, adj_mat)
+        # Activation function
+        x = self.activation(x)
+        # Dropout
+        x = self.dropout(x)
+        # Second graph acttention layer (without activation) for logits
+        return self.layer2(x, adj_mat)
