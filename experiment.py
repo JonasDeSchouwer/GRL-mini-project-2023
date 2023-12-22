@@ -79,12 +79,11 @@ def train(model: nn.Module, dataset: IdDataset, conf, run_name=None):
     else:
         raise Exception(f"loss function {conf.loss_func} unknown")
 
+    best_val_loss_epoch = 0
+    best_val_loss_value = np.inf
+
     for epoch in range(conf.max_epochs):
         model.train()
-
-        running_loss = 0
-        best_val_loss_epoch = 0
-        best_val_loss_value = np.inf
 
         for batch in dataset.iter_batches(batch_size=conf.batch_size):
             
@@ -94,7 +93,6 @@ def train(model: nn.Module, dataset: IdDataset, conf, run_name=None):
             for graph in batch:
                 outputs = model(graph.features, graph.adj)
                 loss += loss_func(outputs, graph.targets)
-                running_loss += loss.item()
             loss /= len(batch)
             loss.backward()
             optim.step()
@@ -113,6 +111,7 @@ def train(model: nn.Module, dataset: IdDataset, conf, run_name=None):
 
         # do early stopping based on the validation loss
         if val_eval["loss"] < best_val_loss_value:
+            print(f"new best validation loss in epoch {epoch}: {val_eval['loss']}")
             best_val_loss_value = val_eval["loss"]
             best_val_loss_epoch = epoch
         if best_val_loss_epoch + conf.patience <= epoch:
