@@ -26,7 +26,7 @@ class Configs:
     n_classes = 5
     n_heads = 1     # use only one head for this experiment
     dropout = 0     # use no dropout because the degrees in IdDataset are way lower than in Cora
-    max_epochs = 1000
+    max_epochs = 500
     patience = 10
     loss_func = 'CrossEntropy'
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -111,7 +111,6 @@ def train(model: nn.Module, dataset: IdDataset, conf, run_name=None):
 
         # do early stopping based on the validation loss
         if val_eval["loss"] < best_val_loss_value:
-            print(f"new best validation loss in epoch {epoch}: {val_eval['loss']}")
             best_val_loss_value = val_eval["loss"]
             best_val_loss_epoch = epoch
         if best_val_loss_epoch + conf.patience <= epoch:
@@ -119,7 +118,7 @@ def train(model: nn.Module, dataset: IdDataset, conf, run_name=None):
             break
         
         if epoch % math.ceil(conf.max_epochs/100) == 0:
-            print (f"epoch {epoch}: {running_loss}")
+            print (f"epoch {epoch}: {train_eval['loss']}")
 
     writer.close()
 
