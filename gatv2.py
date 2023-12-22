@@ -137,6 +137,11 @@ class GraphAttentionV2Layer(Module):
         else:
             # $$\overrightarrow{h'_i} = \frac{1}{K} \sum_{k=1}^{K} \overrightarrow{h'^k_i}$$
             return attn_res.mean(dim=1)
+    
+    def reset_parameters(self):
+        self.linear_l.reset_parameters()
+        self.linear_r.reset_parameters()
+        self.attn.reset_parameters()
         
 
 class GATv2_1L(nn.Module):
@@ -177,6 +182,9 @@ class GATv2_1L(nn.Module):
         # First graph attention layer
         x = self.layer1(x, adj_mat)
         return x
+    
+    def reset_parameters(self):
+        self.layer1.reset_parameters()
 
 
 class GATv2_2L(nn.Module):
@@ -229,3 +237,7 @@ class GATv2_2L(nn.Module):
         x = self.dropout(x)
         # Second graph acttention layer (without activation) for logits
         return self.layer2(x, adj_mat)
+    
+    def reset_parameters(self):
+        self.layer1.reset_parameters()
+        self.layer2.reset_parameters()

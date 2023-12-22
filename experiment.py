@@ -2,7 +2,7 @@
 This file contains the configurations for the main experiment and the training loop of the experiment itself
 """
 
-from typing import List
+from typing import List, Dict
 import math
 
 import numpy as np
@@ -11,11 +11,10 @@ from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 
 from gatv2 import Architecture, GATv2_1L, GATv2_2L
-from dataset import IdDataset, Graph
+from dataset import IdDataset, Graph, generateIdDataset
 
 
-dataset = IdDataset(load_default=True)
-
+print(torch.cuda.is_available())
 
 class Configs:
     """
@@ -27,7 +26,7 @@ class Configs:
     n_classes = 5
     n_heads = 1     # use only one head for this experiment
     dropout = 0     # use no dropout because the degrees in IdDataset are way lower than in Cora
-    max_epochs = 500
+    max_epochs = 1000
     patience = 10
     loss_func = 'CrossEntropy'
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -60,7 +59,7 @@ def evaluate(model: nn.Module, set: List[Graph], loss_func=None):
     }
 
 
-def train(model: nn.Module, conf):
+def train(model: nn.Module, dataset: IdDataset, conf, run_name=None):
     # define optimizer
     if conf.optimizer == 'Adam':
         optim = torch.optim.Adam(
@@ -72,7 +71,7 @@ def train(model: nn.Module, conf):
         raise Exception(f"optimizer {conf.optimizer} unknown")
     
     # SummaryWriter for logging metrics
-    writer = SummaryWriter()
+    writer = SummaryWriter(f"study/runs/{run_name}") if run_name is not None else SummaryWriter()
     
     # define loss function
     if conf.loss_func == 'CrossEntropy':
@@ -129,12 +128,29 @@ def main():
     # Create configurations
     conf = Configs()
     # Create GATv2 models
-    model_1A = GATv2_1L(in_features=conf.in_features, n_classes=conf.n_classes, n_heads=conf.n_heads, dropout=conf.dropout, share_weights=conf.share_weights, architecture=Architecture.A)
-    model_1B = GATv2_1L(in_features=conf.in_features, n_classes=conf.n_classes, n_heads=conf.n_heads, dropout=conf.dropout, share_weights=conf.share_weights, architecture=Architecture.B)
-    model_2A = GATv2_2L(in_features=conf.in_features, n_hidden=conf.n_hidden, n_classes=conf.n_classes, n_heads=conf.n_heads, dropout=conf.dropout, share_weights=conf.share_weights, architecture=Architecture.A, activation=nn.Tanh())
-    model_2B = GATv2_2L(in_features=conf.in_features, n_hidden=conf.n_hidden, n_classes=conf.n_classes, n_heads=conf.n_heads, dropout=conf.dropout, share_weights=conf.share_weights, architecture=Architecture.B, activation=nn.Tanh())
+    models: Dict[str, nn.Module] = {
+        "1A": GATv2_1L(in_features=conf.in_features, n_classes=conf.n_classes, n_heads=conf.n_heads, dropout=conf.dropout, share_weights=conf.share_weights, architecture=Architecture.A),
+        "1B": GATv2_1L(in_features=conf.in_features, n_classes=conf.n_classes, n_heads=conf.n_heads, dropout=conf.dropout, share_weights=conf.share_weights, architecture=Architecture.B),
+        "2A": GATv2_2L(in_features=conf.in_features, n_hidden=conf.n_hidden, n_classes=conf.n_classes, n_heads=conf.n_heads, dropout=conf.dropout, share_weights=conf.share_weights, architecture=Architecture.A, activation=nn.Tanh()),
+        "2B": GATv2_2L(in_features=conf.in_features, n_hidden=conf.n_hidden, n_classes=conf.n_classes, n_heads=conf.n_heads, dropout=conf.dropout, share_weights=conf.share_weights, architecture=Architecture.B, activation=nn.Tanh())
+    }
 
-    train(model_1A, conf)
+    for s in range(0,10):
+        theta = s/9 * math.pi/2
+
+        # reset the model parameters
+        for model in models.values():
+            model.reset_parameters()
+
+        # generate dataset and save for reproducibility
+        dataset = generateIdDataset(theta=theta)
+        dataset.save(f"study/datasets/IdDataset_{s*10}°")
+
+        for model_name, model in models.items():
+            run_name = f"Run_{model_name}_{s*10}°"
+            print(f"\n--- starting run {run_name} ---")
+            train(model, dataset, conf,
+                  run_name=run_name)
 
 
 #
