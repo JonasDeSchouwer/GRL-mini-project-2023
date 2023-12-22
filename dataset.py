@@ -55,7 +55,7 @@ class IdDataset():
             yield [self.training_graphs[i] for i in batch]
 
 
-def generateIdDataset() -> IdDataset:
+def generateIdDataset(theta) -> IdDataset:
     training_graphs = []
     validation_graphs = []
     test_graphs = []
@@ -66,15 +66,15 @@ def generateIdDataset() -> IdDataset:
     for n in range(20,30):
         for _ in range(15):
             training_graphs.append(
-                generate_Id_graph(n,r,d)
+                generate_Id_graph(n,r,d, theta)
             )
         for _ in range(5):
             validation_graphs.append(
-                generate_Id_graph(n,r,d)
+                generate_Id_graph(n,r,d, theta)
             )
         for _ in range(5):
             test_graphs.append(
-                generate_Id_graph(n,r,d)
+                generate_Id_graph(n,r,d, theta)
             )
 
     dataset = IdDataset(load_default=False)
@@ -112,19 +112,30 @@ def generate_ER_adj_no_isolated(n,r):
             print("20 failed attempts")
     raise Exception("Timeout")
 
-def generate_random_feat_and_targ(n,d):
+def generate_random_feat_and_targ(n,d, theta):
     """
-    generate a nxd feature matrix 
-    where each row is a uniformly chosen one-hot vector of size d
-    an a d-size feature vector where each entry is the corresponding class index
+    `theta` in radians!
+
+    generate a nxd-size feature matrix and a n-size target vector
+    each target is a uniformly chosen class index
+    and each row in the feature matrix is uniformly chosen
+    among the vectors at an angle of theta from the corresponding one-hot vector
+    https://math.stackexchange.com/questions/2464998/random-vector-with-fixed-angle
     """
     targets = torch.randint(low=0, high=d, size=(n,))
-    features = F.one_hot(targets, num_classes=d).float()
+
+    one_hot_feat = F.one_hot(targets, num_classes=d).float()
+    orth = torch.randn((n,d))
+    for i in range(n):
+        orth[i,targets[i]] = 0
+    orth = F.normalize(orth, dim=1)     # Nxd, where the rows are orthogonal to the corresponding feature vector
+    
+    features = math.cos(theta)*one_hot_feat + math.sin(theta)*orth
     return (features, targets)
 
-def generate_Id_graph(n,r,d) -> Graph:
+def generate_Id_graph(n,r,d, theta) -> Graph:
     adj = generate_ER_adj_no_isolated(n,r)
-    feat, targ = generate_random_feat_and_targ(n,d)
+    feat, targ = generate_random_feat_and_targ(n,d, theta)
 
     return Graph(
         adj=adj,
