@@ -141,8 +141,10 @@ def main():
             model.reset_parameters()
 
         # generate dataset and save for reproducibility
-        dataset = generateIdDataset(theta=theta)
-        dataset.save(f"study/datasets/IdDataset_{s*10}°")
+        # dataset = generateIdDataset(theta=theta)
+        # dataset.save(f"study/datasets/IdDataset_{s*10}°")
+        dataset = IdDataset(load_default=False)
+        dataset.load(f"study/datasets/IdDataset_{s*10}°")
 
         for model_name, model in models.items():
             run_name = f"Run_{model_name}_{s*10}°"
