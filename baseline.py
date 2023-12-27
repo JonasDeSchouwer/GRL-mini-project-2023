@@ -21,8 +21,11 @@ def main():
         dataset = IdDataset(load_default=False)
         dataset.load(f"study1/datasets/IdDataset_{s*10}°")
 
-        eval_argmax = evaluate(idmodel, dataset.test_graphs)
-        print(s*10, '°: ', eval_argmax["acc"], sep="")
+        test_eval_argmax = evaluate(idmodel, dataset.test_graphs)
+        print("test", s*10, '°: ', test_eval_argmax["acc"], sep="")
+
+        train_eval_argmax = evaluate(idmodel, dataset.training_graphs)
+        print("train", s*10, '°: ', train_eval_argmax["acc"], sep="")
 
 if __name__ == "__main__":
     main()
