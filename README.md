@@ -2,11 +2,14 @@
 
 
 Welcome to the (anonymized) git repository for my GRL mini project. Using this codebase, I compared the ability of two architectures to capture correlation between the input features and the target labels in a node classification task.
-The first studied architecture is GATv2 ($\mathcal{A}$) \cite{GATv2}, consisting of GATv2 layers interleaved with nonlinearities. The second studied architecture ($\mathcal{B}$) is an extension thereof, consisting of a slightly modified type of layers interleaved with nonlinearities:
+The first studied architecture is GATv2 (<img src="https://latex.codecogs.com/svg.latex?\mathcal{A}"/>) \cite{GATv2}, consisting of GATv2 layers interleaved with nonlinearities. The second studied architecture (<img src="https://latex.codecogs.com/svg.latex?\mathcal{B}"/>) is an extension thereof, consisting of a slightly modified type of layers interleaved with nonlinearities:
 
 
+![](equations/Alayer.png)
+![](equations/Blayer.png)
 
-$$
+
+<!-- $$
 \mathcal{A}_{\text{layer}} :
 \begin{cases}
     e_{ij}^{(t)} = {\boldsymbol{a}^{(t)}}^T \text{LeakyReLU}\left(
@@ -25,8 +28,6 @@ $$
     \boldsymbol{h}_i^{(t)} = \sum_{j\in\mathcal{N}_i} \alpha_{ij}^{(t)} W_r^{(t)} \boldsymbol{h}^{(t-1)}_j
 \end{cases}
 $$
-
-
 $$
 \mathcal{B}_{\text{layer}} :
 \begin{cases}
@@ -39,14 +40,13 @@ $$
         \boldsymbol{h}_j^{(t-1)}
     \end{pmatrix}
     \right)
-
     & \text{for } j\in\mathcal{N}_i
     \\
     \alpha_{ij}^{(t)} = \text{softmax}_j(e_{ij}^{(t)})
     \\
     \boldsymbol{h}_i^{(t)} = W_l^{(t)}\boldsymbol{h}_i^{(t-1)} + \sum_{j\in\mathcal{N}_i} \alpha_{ij}^{(t)} W_r^{(t)} \boldsymbol{h}^{(t-1)}_j
 \end{cases}
-$$
+$$ -->
 
 
 ## Repository structure
