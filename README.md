@@ -6,6 +6,7 @@ The first studied architecture is GATv2 (<img src="https://latex.codecogs.com/sv
 
 
 ![](equations/Alayer.png)
+
 ![](equations/Blayer.png)
 
 
