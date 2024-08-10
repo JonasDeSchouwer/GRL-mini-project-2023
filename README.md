@@ -1,7 +1,7 @@
 # GRL-mini-project-2023
 
 
-Welcome to the (anonymized) git repository for my GRL mini project. Using this codebase, I compared the ability of two architectures to capture correlation between the input features and the target labels in a node classification task.
+Welcome to the git repository for my GRL mini project. Using this codebase, I compared the ability of two architectures to capture correlation between the input features and the target labels in a node classification task.
 The first studied architecture is GATv2 (<img src="https://latex.codecogs.com/svg.latex?\mathcal{A}"/>) \cite{GATv2}, consisting of GATv2 layers interleaved with nonlinearities. The second studied architecture (<img src="https://latex.codecogs.com/svg.latex?\mathcal{B}"/>) is an extension thereof, consisting of a slightly modified type of layers interleaved with nonlinearities:
 
 
